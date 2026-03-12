@@ -9,8 +9,8 @@
 //
 // Command reference (also printed by STATUS):
 //
-//  MODE <0-5,99>  - 0=idle  1=walk  2=translate  3=rotate
-//                   4=one_leg_lift  5=autonomous  99=set_all_90
+//  MODE <0-6,99>  - 0=idle  1=walk  2=translate  3=rotate
+//                   4=one_leg_lift  5=autonomous  6=recovery  99=set_all_90
 //  GAIT <0-3>     - 0=tripod  1=wave  2=ripple  3=tetrapod
 //                   (resets position and stops movement)
 //  SPEED <0-1>    - 0=fast  1=slow
@@ -146,9 +146,20 @@ void parse_command(String cmd)
     Serial.print("Joy LX:    "); Serial.println(joy_LX);
     Serial.print("Joy LY:    "); Serial.println(joy_LY);
     Serial.print("Batt (V):  "); Serial.println(float(batt_voltage) / 100.0);
+    Serial.println("--- IMU ---");
+    if(imu_ok) {
+      Serial.print("Pitch:     "); Serial.print(imu_pitch, 1); Serial.println(" deg");
+      Serial.print("Roll:      "); Serial.print(imu_roll,  1); Serial.println(" deg");
+      Serial.print("Heading:   "); Serial.print(imu_yaw,   1); Serial.println(" deg");
+      Serial.print("Roughness: "); Serial.print(imu_accel_rms, 0); Serial.println(" mg");
+      Serial.print("StepMult:  "); Serial.println(step_height_multiplier, 2);
+    } else {
+      Serial.println("IMU:       NOT FOUND");
+    }
     Serial.println("--- Commands ---");
-    Serial.println("MODE <0-5,99> | GAIT <0-3> | SPEED <0-1>");
-    Serial.println("  Mode 5 = autonomous (wave gait near obstacles, tripod when clear)");
+    Serial.println("MODE <0-6,99> | GAIT <0-3> | SPEED <0-1>");
+    Serial.println("  Mode 5 = autonomous (wave near obstacles, tripod when clear)");
+    Serial.println("  Mode 6 = recovery (read-only: auto-triggered when stuck)");
     Serial.println("JOY <RX 0-255> <RY 0-255> <LX 0-255> <LY 0-255>  (128=center)");
     Serial.println("  Walk fwd: JOY 128 50 128 128");
     Serial.println("  Walk bck: JOY 128 200 128 128");

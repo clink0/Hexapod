@@ -9,7 +9,8 @@
 //***********************************************************************
 
 // Returns the median of three ultrasonic distance readings (cm).
-// Returns 400 cm on timeout (no echo within 20 ms).
+// Timeout is 5800 µs (~100 cm max range) — enough for obstacle avoidance
+// and keeps worst-case blocking to 35 ms instead of 120 ms per measurement.
 float get_distance(int trig, int echo)
 {
   float readings[3];
@@ -20,8 +21,8 @@ float get_distance(int trig, int echo)
     digitalWrite(trig, HIGH);
     delayMicroseconds(10);
     digitalWrite(trig, LOW);
-    long dur = pulseIn(echo, HIGH, 20000);
-    readings[i] = (dur == 0) ? 400.0 : dur * 0.034 / 2.0;
+    long dur = pulseIn(echo, HIGH, 5800);
+    readings[i] = (dur == 0) ? 200.0 : dur * 0.034 / 2.0;  // cap at 200 cm on timeout
   }
   // sort three values to isolate the median
   if(readings[0] > readings[1]) { float t = readings[0]; readings[0] = readings[1]; readings[1] = t; }

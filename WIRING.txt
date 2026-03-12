@@ -1,0 +1,288 @@
+HEXAPOD WIRING REFERENCE
+========================
+Use this document to draw a wiring diagram by hand.
+All voltages are 5V logic (Arduino Mega) unless noted.
+Servo power and logic power should be on separate rails.
+
+========================================================
+POWER DISTRIBUTION
+========================================================
+
+2S LiPo battery (7.4V nominal, 8.4V full)
+  |
+  +-- VBAT rail (7.4-8.4V) ---> Servo power (center pin, red wire, all 18 servos)
+  |
+  +-- 5V BEC or voltage regulator ---> Arduino Mega Vin (or 5V pin if using regulated supply)
+  |
+  +-- Voltage divider for battery monitor:
+        VBAT ---> R1 (20 kOhm) ---> junction node ---> R2 (10 kOhm) ---> GND
+                                              |
+                                              +---> Arduino A0
+
+GND:
+  Battery negative ---> Arduino GND
+  All servo GND wires (black) ---> common GND rail
+  Sensor GNDs ---> Arduino GND
+  LED GNDs ---> Arduino GND
+
+
+========================================================
+SERVO CONNECTIONS (18 servos total)
+========================================================
+
+All servos: 3-wire (GND=black, Power=red, Signal=orange/yellow/white)
+  - Power (red)   ---> 7.4V servo rail (from battery or BEC)
+  - GND (black)   ---> GND rail
+  - Signal (white) ---> Arduino digital pin listed below
+
+Servo layout — 3 servos per leg, in order from body outward:
+  Coxa (horizontal rotation) ---> Femur (hip up/down) ---> Tibia (knee extend/retract)
+
+LEG 1 (Front-Right):
+  Coxa1  signal ---> Arduino pin 19
+  Femur1 signal ---> Arduino pin 8   <--- NOTE: pin 8, NOT pin 21.
+                                           Pin 21 is I2C SCL (reserved for IMU).
+  Tibia1 signal ---> Arduino pin 23
+
+LEG 2 (Mid-Right):
+  Coxa2  signal ---> Arduino pin 25
+  Femur2 signal ---> Arduino pin 27
+  Tibia2 signal ---> Arduino pin 29
+
+LEG 3 (Rear-Right):
+  Coxa3  signal ---> Arduino pin 31
+  Femur3 signal ---> Arduino pin 33
+  Tibia3 signal ---> Arduino pin 35
+
+LEG 4 (Rear-Left):
+  Coxa4  signal ---> Arduino pin 37
+  Femur4 signal ---> Arduino pin 39
+  Tibia4 signal ---> Arduino pin 41
+
+LEG 5 (Mid-Left):
+  Coxa5  signal ---> Arduino pin 43
+  Femur5 signal ---> Arduino pin 45
+  Tibia5 signal ---> Arduino pin 47
+
+LEG 6 (Front-Left):
+  Coxa6  signal ---> Arduino pin 49
+  Femur6 signal ---> Arduino pin 51
+  Tibia6 signal ---> Arduino pin 53
+
+Note: Servo pulse range is 610-2400 us (non-standard — do not use the default 544-2400).
+
+
+========================================================
+LED BAR (8 red/green LED pairs)
+========================================================
+
+Each LED has an anode (long leg) and cathode (short leg).
+The code drives pins HIGH to turn LEDs ON — so wire each LED with a current-limiting
+resistor (220-470 ohm) in series between the Arduino pin and the LED anode.
+LED cathodes all connect to GND.
+
+Pair 1:   Red1   anode ---> 220R ---> Arduino pin 22
+          Green1 anode ---> 220R ---> Arduino pin 24
+
+Pair 2:   Red2   anode ---> 220R ---> Arduino pin 26
+          Green2 anode ---> 220R ---> Arduino pin 28
+
+Pair 3:   Red3   anode ---> 220R ---> Arduino pin 30
+          Green3 anode ---> 220R ---> Arduino pin 32
+
+Pair 4:   Red4   anode ---> 220R ---> Arduino pin 34
+          Green4 anode ---> 220R ---> Arduino pin 36
+
+Pair 5:   Red5   anode ---> 220R ---> Arduino pin 38
+          Green5 anode ---> 220R ---> Arduino pin 40
+
+Pair 6:   Red6   anode ---> 220R ---> Arduino pin 42
+          Green6 anode ---> 220R ---> Arduino pin 44
+
+Pair 7:   Red7   anode ---> 220R ---> Arduino pin 46
+          Green7 anode ---> 220R ---> Arduino pin 48
+
+Pair 8:   Red8   anode ---> 220R ---> Arduino pin 50
+          Green8 anode ---> 220R ---> Arduino pin 52
+
+All LED cathodes ---> GND
+
+
+========================================================
+ULTRASONIC SENSORS — HC-SR04 (x2)
+========================================================
+
+Each HC-SR04 has 4 pins: VCC, TRIG, ECHO, GND
+
+LEFT sensor (forward-left facing):
+  VCC  ---> 5V
+  GND  ---> GND
+  TRIG ---> Arduino pin 14
+  ECHO ---> Arduino pin 15
+
+RIGHT sensor (forward-right facing):
+  VCC  ---> 5V
+  GND  ---> GND
+  TRIG ---> Arduino pin 16
+  ECHO ---> Arduino pin 17
+
+Note: HC-SR04 is a 5V device. The Arduino Mega's digital pins are 5V tolerant so
+no level shifting is needed on this board.
+
+
+========================================================
+IR PROXIMITY SENSORS (x2, active-LOW output)
+========================================================
+
+These are small IR obstacle sensors with a 3-pin connector: VCC, GND, OUT.
+The output pin goes LOW when an obstacle is detected.
+Arduino uses INPUT mode (no internal pullup needed — the module has its own pullup).
+
+LEFT IR sensor:
+  VCC ---> 5V
+  GND ---> GND
+  OUT ---> Arduino pin 18
+
+RIGHT IR sensor:
+  VCC ---> 5V
+  GND ---> GND
+  OUT ---> Arduino pin 9    <--- IMPORTANT: Use pin 9, NOT pin 20.
+                                  Pin 20 is I2C SDA and must remain free for the IMU.
+
+
+========================================================
+FOOT CONTACT SENSORS (x6, momentary switches)
+========================================================
+
+Each sensor is a simple normally-open (NO) momentary push switch mounted at the
+foot tip of each leg. When the foot touches the ground the switch closes.
+
+Wiring for each switch (2 terminals):
+  Terminal 1 ---> Arduino digital pin (see table below)
+  Terminal 2 ---> GND
+
+The code configures each pin as INPUT_PULLUP, so the pin reads HIGH when open
+(foot in air) and LOW when closed (foot on ground). No resistors needed.
+
+  Leg 0 Front-Right  switch ---> Arduino pin 2  and  GND
+  Leg 1 Mid-Right    switch ---> Arduino pin 3  and  GND
+  Leg 2 Rear-Right   switch ---> Arduino pin 4  and  GND
+  Leg 3 Rear-Left    switch ---> Arduino pin 5  and  GND
+  Leg 4 Mid-Left     switch ---> Arduino pin 6  and  GND
+  Leg 5 Front-Left   switch ---> Arduino pin 7  and  GND
+
+
+========================================================
+IMU — SparkFun Qwiic ICM-20948 9DoF
+========================================================
+
+The ICM-20948 breakout uses I2C. On the Arduino Mega the hardware I2C bus is:
+  SDA ---> Arduino pin 20   (reserved — do not wire anything else to this pin)
+  SCL ---> Arduino pin 21   (reserved — do not wire anything else to this pin)
+
+Option A: Qwiic cable (easiest)
+  Plug a 4-pin Qwiic cable from the IMU breakout directly to a Qwiic connector
+  on a Qwiic-to-Mega adapter board (or a Qwiic shield for Mega).
+  The Qwiic cable carries: GND, 3.3V, SDA, SCL.
+
+Option B: Direct wire to Mega header
+  IMU GND  ---> Arduino GND
+  IMU 3.3V ---> Arduino 3.3V
+  IMU SDA  ---> Arduino pin 20
+  IMU SCL  ---> Arduino pin 21
+
+Note: The ICM-20948 is a 3.3V device. The Mega's I2C pins are 5V but the
+SparkFun breakout includes level shifting — direct wiring is safe.
+
+AD0 pin:
+  The SparkFun Qwiic breakout pulls AD0 HIGH by default, giving I2C address 0x69.
+  If you need address 0x68 instead, pull AD0 to GND.
+  The firmware uses address 0x69 (IMU_AD0_VAL = 1 in config.h).
+
+I2C pull-up resistors:
+  The SparkFun breakout includes onboard pull-ups. No external resistors needed.
+  Bus speed is set to 400 kHz (Fast Mode) in firmware.
+
+
+========================================================
+BATTERY MONITOR — Voltage Divider
+========================================================
+
+Purpose: scale the 2S LiPo voltage (max 8.4V) down to Arduino ADC range (max 5V).
+Divider ratio: R2 / (R1 + R2) = 10k / (20k + 10k) = 0.333
+  At 8.4V: 8.4 * 0.333 = 2.8V (safe for 5V ADC)
+  At 6.0V: 6.0 * 0.333 = 2.0V (low-battery threshold)
+
+Wiring:
+  Battery + ---> R1 (20 kOhm) ---> node A ---> R2 (10 kOhm) ---> GND
+                                       |
+                                       +---> Arduino A0
+
+Use 1% tolerance resistors if accurate voltage reading matters.
+Node A voltage = Vbat * 10 / 30 = Vbat / 3.
+
+
+========================================================
+USB SERIAL
+========================================================
+
+Connect Arduino Mega USB port to host computer.
+All commands are sent via USB Serial at 115200 baud.
+No additional wiring required.
+
+
+========================================================
+SUMMARY — ARDUINO MEGA PIN USAGE
+========================================================
+
+Pin  | Function
+-----|----------------------------------------------------------
+A0   | Battery voltage monitor (analog input)
+2    | Foot sensor leg 0 Front-Right (INPUT_PULLUP)
+3    | Foot sensor leg 1 Mid-Right   (INPUT_PULLUP)
+4    | Foot sensor leg 2 Rear-Right  (INPUT_PULLUP)
+5    | Foot sensor leg 3 Rear-Left   (INPUT_PULLUP)
+6    | Foot sensor leg 4 Mid-Left    (INPUT_PULLUP)
+7    | Foot sensor leg 5 Front-Left  (INPUT_PULLUP)
+8    | Femur1 servo (Front-Right hip) — moved here from pin 21 to free I2C SCL
+9    | IR proximity RIGHT (INPUT)
+14   | HC-SR04 left TRIG (OUTPUT)
+15   | HC-SR04 left ECHO (INPUT)
+16   | HC-SR04 right TRIG (OUTPUT)
+17   | HC-SR04 right ECHO (INPUT)
+18   | IR proximity LEFT (INPUT)
+19   | Coxa1 servo (Front-Right)
+20   | I2C SDA — IMU  *** DO NOT USE FOR ANYTHING ELSE ***
+21   | I2C SCL — IMU  *** DO NOT USE FOR ANYTHING ELSE ***
+22   | LED Red1
+23   | Tibia1 servo (Front-Right)
+24   | LED Green1
+25   | Coxa2 servo (Mid-Right)
+26   | LED Red2
+27   | Femur2 servo (Mid-Right)
+28   | LED Green2
+29   | Tibia2 servo (Mid-Right)
+30   | LED Red3
+31   | Coxa3 servo (Rear-Right)
+32   | LED Green3
+33   | Femur3 servo (Rear-Right)
+34   | LED Red4
+35   | Tibia3 servo (Rear-Right)
+36   | LED Green4
+37   | Coxa4 servo (Rear-Left)
+38   | LED Red5
+39   | Femur4 servo (Rear-Left)
+40   | LED Green5
+41   | Tibia4 servo (Rear-Left)
+42   | LED Red6
+43   | Coxa5 servo (Mid-Left)
+44   | LED Green6
+45   | Femur5 servo (Mid-Left)
+46   | LED Red7
+47   | Tibia5 servo (Mid-Left)
+48   | LED Green7
+49   | Coxa6 servo (Front-Left)
+50   | LED Red8
+51   | Femur6 servo (Front-Left)
+52   | LED Green8
+53   | Tibia6 servo (Front-Left)

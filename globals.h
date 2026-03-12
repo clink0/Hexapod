@@ -70,6 +70,36 @@ float amplitudeX, amplitudeY, amplitudeZ;
 float offset_X[6],  offset_Y[6],  offset_Z[6];
 float current_X[6], current_Y[6], current_Z[6];
 
+// --- IMU state (managed by imu.h) ---
+float imu_pitch     =  0.0;   // degrees, + = nose up
+float imu_roll      =  0.0;   // degrees, + = right side down
+float imu_yaw       =  0.0;   // degrees, 0-360 magnetic heading
+float imu_accel_rms =  0.0;   // smoothed terrain roughness (mg deviation from 1g)
+bool  imu_ok        = false;  // false if IMU not found at startup
+
+// Per-leg body-leveling offsets computed each frame from imu_pitch/roll.
+// Added to offset_X/Y/Z in the IK call so they don't pollute the capture offsets.
+float level_offset_X[6] = {0,0,0,0,0,0};
+float level_offset_Y[6] = {0,0,0,0,0,0};
+float level_offset_Z[6] = {0,0,0,0,0,0};
+
+// Extra Z offset applied to all legs in the IK call.
+// 0 normally; set negative (e.g. -40) to extend legs and stand taller.
+float z_body_offset = 0.0;
+
+// --- Recovery state (managed by recovery.h) ---
+// State IDs (mirrored as constants in recovery.h)
+int           recovery_state    = 0;    // 0 = REC_IDLE
+unsigned long recovery_phase_ms = 0;    // millis() when current phase started
+unsigned long recovery_start_ms = 0;    // millis() when recovery was entered
+unsigned long stuck_confirm_ms  = 0;    // accumulated ms in stuck condition
+int           pre_recovery_mode = 0;    // mode to report from (not restored; safety goes to 0)
+
+// --- Foot contact state (managed by foot_sensors.h) ---
+bool  foot_grounded[6] = {false, false, false, false, false, false};
+float foot_ground_Z[6];   // Z depth where contact was last detected (init to HOME_Z in setup)
+float foot_target_Z[6];   // floor the gait cannot drive below for this step (init to HOME_Z in setup)
+
 // --- Gait phase trackers (reset by GAIT command) ---
 int tripod_case[6]   = {1,2,1,2,1,2};
 int ripple_case[6]   = {2,6,4,1,3,5};
